@@ -1,0 +1,43 @@
+Common Rust in corn is caused by the fungus Puccinia sorghi. It is a widespread disease that affects corn leaves, reducing photosynthesis and, in severe cases, impacting yield. The disease is most prevalent in cool, moist conditions and can spread rapidly under favorable weather.
+
+What It Looks Like:
+On Leaves:
+
+Small, raised, reddish-brown pustules (spore-producing structures) appear on both the upper and lower surfaces of the leaves.
+These pustules may form in rows or scattered across the leaf surface.
+As the disease progresses, the pustules turn darker, and the surrounding leaf tissue may become yellow.
+Severely infected leaves can dry out and die prematurely, reducing the plant's photosynthetic capacity.
+On Stalks (Rarely):
+
+Pustules may occasionally form on stalks and husks, though this is less common than on the leaves.
+How It Spreads:
+Wind-Blown Spores:
+
+The fungus produces spores that are carried long distances by the wind. These spores land on corn leaves, germinate, and cause new infections under favorable conditions.
+Cool, Moist Conditions:
+
+Common rust thrives in cool temperatures (60–75°F or 15–24°C) and high humidity.
+Extended periods of leaf wetness, such as from rain or dew, promote the spread of the disease.
+Overwintering in Tropical Areas:
+
+The fungus does not survive the winter in colder climates but overwinters in southern or tropical regions. Spores are blown northward to infect new crops each year.
+How to Control and Treat It:
+Use Resistant Hybrids:
+
+Plant corn hybrids that are resistant to common rust. Many modern corn hybrids have built-in resistance that can effectively prevent significant infection.
+Choose hybrids appropriate for your region and environmental conditions to reduce susceptibility.
+Fungicide Applications:
+
+Apply fungicides if conditions are conducive to disease development and rust is detected early.
+Fungicides containing strobilurins or triazoles can be effective at controlling common rust, especially if applied at the first signs of infection.
+Monitor disease progression and weather patterns to determine the necessity of fungicide application.
+Improve Airflow and Drying:
+
+Plant corn with proper spacing to allow good air circulation through the crop canopy, which helps leaves dry faster and reduces the risk of infection.
+Crop Rotation:
+
+Practice crop rotation with non-host crops like soybeans or wheat to reduce the presence of fungal spores in the field.
+Prevention Tips:
+Plant Resistant Varieties: This is the most effective way to prevent common rust from affecting your crop.
+Monitor Weather and Field Conditions: Keep an eye on conditions that favor rust development, especially cool, moist weather.
+Timely Fungicide Application: Apply fungicides at the early stages of infection to prevent the disease from spreading further.
