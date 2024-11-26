@@ -1,36 +1,34 @@
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 
-
-language={'hi_IN':'hi',
-            'en_US':'en'
-    }
+language = {
+    'hi_IN': 'hi',
+    'en_US': 'en',
+    'ta_IN':'ta'
+}
 
 def translate_to_english(text):
-    # Initialize the translator
-    translator = Translator()
-    # Translate the text to English
-    translation = translator.translate(text, dest='en')
+    try:
+        # Translate the text to English
+        translation = GoogleTranslator(source='auto', target='en').translate(text)
+        # Return the translated text
+        print(translation)
+        return translation
+    except Exception as e:
+        print(e)
 
-    # Return the translated text
-    return translation.text
-
-def english_to_other(lang,text):
-    translator = Translator()
-
-    lan=language[lang]
-
-    translation = translator.translate(text, src='en', dest=lan)
-
-    return translation.text
-
-
-
+def english_to_other(lang, text):
+    try:
+        lan = language[lang]
+        # Translate from English to the target language
+        translation = GoogleTranslator(source='en', target=lan).translate(text)
+        return translation
+    except Exception as e:
+        print(e)
 
 if __name__ == "__main__":
     # Example text in various languages
     texts = [
-
-    "جا کر ہمارے مالک کے لئے کچھ پانی خری دو"
+        "جا کر ہمارے مالک کے لئے کچھ پانی خری دو"
     ]
 
     # Translate each text to English

@@ -1,21 +1,20 @@
-#!/home/sudharsan/myenv/bin/python3
+#!/home/sudharsan/myenv3.12/bin/python3
 from flask import Flask, request, jsonify,send_from_directory
 import requests
 import os
 from datetime import datetime
+import traceback
+import random
 
+choice=[True,False]
 
 from llm import llm
-from model import model
-from model import model_fruit
 from llm import normal_llm
-
 import lat_to_place as location
 import database
-
 import language_conversion
-
 import ensem
+import cloudinary_file_upload as cloud
 
 app = Flask(__name__)
 
@@ -26,6 +25,24 @@ Model_dir="/home/sudharsan/projects/sih_model/model/tflite/"
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+disease=""
+#=============================================[ login ]=================================================================
+
+@app.route('/login',methods=['post'])
+def login():
+    try:
+        credentials = request.json
+        
+        print("Credentials")
+
+        print(credentials)
+
+        return jsonify({'message': 'ntg','error':False}), 200
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({'message': 'UnExpected Error occurs','error':True}), 500
 
 #=============================================[react endpoint]=========================================================== 
 @app.route('/api', methods=['POST'])                  #To make vecctor embeddings and get response from LLM
@@ -52,6 +69,8 @@ def add_user():
 @app.route('/check_endpoint', methods=['get'])     #To verify the IP address
 def check():
     return jsonify({'check':True}),201
+       
+#====================================================================================================
 
 @app.route('/web_loader', methods=['post'])         #To load the website and convert it into vector embeddings
 def load():
@@ -63,9 +82,13 @@ def load():
 
     db=llm.create_vector_db(path)
     return jsonify({'error':False,'body':"website exists"}),201
-    
+       
+#====================================================================================================
+
 @app.route('/reply', methods=['POST'])                  #To make vecctor embeddings and get response from LLM
 def reply():
+
+    files_=os.listdir('uploads/'+disease+'/')
     global db
     try:
         new_user = request.json  
@@ -81,15 +104,22 @@ def reply():
 
         response=language_conversion.english_to_other(output_lang,response)
 
-        return jsonify({'message': response,'error':False}), 200
+        
+        random_file=random.choice(files_)
+
+        return jsonify({'message': response,'random_path':random_file}), 200
+        
     
     except Exception as e:
         print(e)
-        return jsonify({'message': 'UnExpected Error occurs','error':True}), 500
+        traceback.print_exc()
+        return jsonify({'message': 'UnExpected Error occurs'}), 500
+
 #====================================================================================================
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    global disease
     print('uploading called')
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -126,29 +156,48 @@ def upload_file():
         # Save the file to the uploads folder
         file.save(file_path)
 
-        predicted_det['img']=filename
 
         # Check if the file exists before processing
         if os.path.exists(file_path):
             try:
-                # Process the file (e.g., classification)
-               # if(type_.lower()=="leaf"):
-                    #result = model.img_classification(file_path)
-                #elif(type_.lower()=="fruit"):
-                    #result=model_fruit.img_classification(file_path)
-                result=ensem.ensem_predict(type_.lower(),crop_name.lower(),file_path)
-                predicted_det['Disease-name']=result
+            
+                if llm.check_img(type_.lower(),file_path):
+                    
+                    result=ensem.ensem_predict(type_.lower(),crop_name.lower(),file_path)
 
-                print(predicted_det)
+                    ensemble_output=result["ensem"]
 
-                data_insertion_id=database.add_post_det(predicted_det)
+                    disease=ensemble_output
 
-                return jsonify({'diseased': True, 'result': result,'insert_id':data_insertion_id}), 200
+                    del result["ensem"]
+                    
+                    predicted_det['Disease-name']=ensemble_output
+
+                    predicted_det['Other_pred']=result
+
+                    file_path=cloud.upload_img(filename)
+
+                    predicted_det['img']=file_path
+                    
+                    ref=ref_path(ensemble_output)
+
+                    data_insertion_id=database.add_post_det(predicted_det)
+
+                    print(f"Insertion ID: {data_insertion_id}")
+
+                    return jsonify({'diseased': True, 'result': ensemble_output,'insert_id':data_insertion_id,"other_results":result,"ref":ref}), 200
+
+                else:
+                    return jsonify({'diseased': False}), 200
+
             except Exception as e:
+                traceback.print_exc()
                 print(e)
                 return jsonify({'error': f'Error processing file: {str(e)}'}), 500
         else:
             return jsonify({'error': 'File not found after saving'}), 500
+       
+#====================================================================================================
 
 @app.route('/common_reply',methods=['post'])
 def normal_reply():
@@ -156,12 +205,13 @@ def normal_reply():
         new_user = request.json  
         print(new_user)
 
-
         selected_lang=new_user['query']
 
         output_lang=new_user['lang']
 
         eng=language_conversion.translate_to_english(selected_lang)
+
+        print(eng)
 
         response=normal_llm.start_app(eng)
 
@@ -169,8 +219,11 @@ def normal_reply():
 
         return jsonify({'message': response,'error':False}), 200
     except Exception as e:
-        print(error)
+        print(e)
+        traceback.print_exc()
         return jsonify({'message': 'UnExpected Error occurs','error':True}), 500
+       
+#====================================================================================================
 
 @app.route('/post_data',methods=['get'])
 def post_data():
@@ -182,6 +235,9 @@ def post_data():
         disease_serialized = [serialize_document(doc) for doc in disease]
 
         # Return the serialized data
+        #print(disease_serialized)
+        print(disease)
+
         return jsonify({'Data': disease_serialized}), 200
 
     except Exception as e:
@@ -189,15 +245,24 @@ def post_data():
         return jsonify({'message': 'Unexpected Error occurs', 'error': True}), 500
 
 
+       
+#====================================================================================================
 
 @app.route('/post_img/<path:filename>')
 def serve_file(filename):
-    return send_from_directory(UPLOAD_DIRECTORY, filename)
+    return send_from_directory(UPLOAD_DIRECTORY+disease+"/", filename)
+       
+#====================================================================================================
 
 @app.route('/model_download/<path:filename>')
 def model_send_file(filename):
-    return send_from_directory(Model_dir, filename)
+    try:
+        return send_from_directory(Model_dir, filename)
+    except Exception as e:
+        print(e)
 
+       
+#====================================================================================================
 
 
 @app.route('/store_chat', methods=['POST'])
@@ -206,6 +271,8 @@ def store_chat():
     data=(request.json)
     database.update_document(data['insertion_id'],'convo',data['convo'])
     return jsonify({'diseased': True}), 200
+       
+#====================================================================================================
 
 @app.route('/available_offline_models', methods=['POST'])
 def available_models():
@@ -239,6 +306,45 @@ def available_models():
         print(e)
         return jsonify({'message': 'Unexpected Error occurs', 'error': True}), 500
 
+       
+#====================================================================================================
+def ref_path(result):
+
+    data_={
+        "apple_scab":'https://extension.umn.edu/plant-diseases/apple-scab',
+        'apple_blackrot':'https://extension.umn.edu/plant-diseases/black-rot-apple',
+        'apple_Cedar_rust':'https://extension.umn.edu/plant-diseases/cedar-apple-rust',
+        'apple_healthy':'https://extension.umn.edu/fruit/growing-apples'
+    }
+
+    label=['apple_scab', 'apple_blackrot', 'apple_Cedar_rust', 'apple_healthy']
+
+    if result not in label:
+        return 'https://extension.umn.edu/plant-diseases/apple-scab'
+    else:
+        return data_[result]
+#============================================================================================
+
+
+@app.route('/environment', methods=['GET'])
+def environment_():
+
+    
+    data=database.environment()
+    print(data)
+    return jsonify(data), 200
+       
+
+@app.route('/pred_env', methods=['GET'])
+def pred_environment_():
+
+    
+    data=database.environment()
+    
+    pred_data=normal_llm.pred_env(data)
+    return jsonify({"message":pred_data})
+       
+#=============================================================================================
 def serialize_document(doc):
     if '_id' in doc:
         doc['_id'] = str(doc['_id'])

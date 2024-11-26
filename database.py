@@ -1,3 +1,4 @@
+
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
@@ -45,12 +46,32 @@ def find_post():
     try:
         collection=db["correct_predictions"]
 
-        documents = collection.find({"district": "Erode"})
+        documents = collection.find()
 
         return list(documents)
     except Exception as e:
         return []
         print(f"An error occurred: {e}")
+
+def environment():
+    try:
+        collection=db["environment_data"]
+
+        documents = collection.find_one()
+
+        data = {
+            'temp': documents.get('temp', []),
+            'humidity': documents.get('humidity', []),
+            'wind': documents.get('wind', []),
+            'pressure': documents.get('pressure', [])
+        }
+
+        return data
+    except Exception as e:
+        
+        print(f"An error occurred: {e}")
+        return {}
+
 
 if __name__=="__main__":
     id=add_post_det({'data':"hai"})
