@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 import traceback
 import random
+import json
 
 choice=[True,False]
 
@@ -15,6 +16,10 @@ import database
 import language_conversion
 import ensem
 import cloudinary_file_upload as cloud
+
+
+from video_conversion import yolo_video_to_img as video2img
+from video_conversion import tflite_model
 
 app = Flask(__name__)
 
@@ -197,6 +202,49 @@ def upload_file():
         else:
             return jsonify({'error': 'File not found after saving'}), 500
        
+ #====================================================================================================
+      
+@app.route('/video_model', methods=['POST'])
+def upload_video():
+    if 'video' not in request.files:
+        return jsonify({'message': 'No video file provided'}), 400
+
+    video = request.files['video']
+    if video.filename == '':
+        return jsonify({'message': 'No selected video'}), 400
+
+    try:
+        # Save the video to the uploads folder
+        video_path = os.path.join('video_dataset', video.filename)
+        video.save(video_path)
+
+        img_paths=video2img.process_video_part('/home/sudharsan/projects/sih_model/video_dataset/uploaded_video.mp4',4)
+
+        frame_details={}
+
+        for img_path in img_paths:
+
+            pred=tflite_model.tflite_output(img_path)
+
+            print(img_path)
+            cloud_img_path=cloud.video_model_frame(img_path)
+
+            frame_details[cloud_img_path]=pred
+            
+        os.remove(video_path)
+
+        print("Final Frame Details:", frame_details)
+
+        json.dumps(frame_details)
+        return jsonify(frame_details), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'message': f'Error uploading video: {str(e)}'}), 500
+
+
+
+
 #====================================================================================================
 
 @app.route('/common_reply',methods=['post'])

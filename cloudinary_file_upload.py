@@ -28,5 +28,21 @@ def upload_img(file_):
     return file_url
 
 
+def video_model_frame(file_):
+    
+
+    upload_result = cloudinary.uploader.upload(
+        file_,
+        folder="video_model"   # Specify the folder in Cloudinary
+    )
+
+        # Print the URL of the uploaded image
+    file_url=upload_result["secure_url"]
+
+    os.remove(file_)
+
+    return file_url
+
+
 if __name__=="__main__":
     cloud_upload_img()
